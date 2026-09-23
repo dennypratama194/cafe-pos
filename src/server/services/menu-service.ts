@@ -1102,7 +1102,7 @@ export async function getPosMenu(
 
   // Items with no active variant are still orderable — sold directly off
   // their basePrice (see order-service.submitOrder).
-  const posItems: PosMenuItem[] = items.filter((item) => (variantsByItem.get(item.id) ?? []).some((variant) => recipeReady.has(variant.id))).map((item) => {
+  const posItems: PosMenuItem[] = items.filter((item) => { const itemVariants = variantsByItem.get(item.id) ?? []; return itemVariants.length === 0 || itemVariants.some((variant) => recipeReady.has(variant.id)); }).map((item) => {
     const itemVariants = (variantsByItem.get(item.id) ?? []).filter((v) => recipeReady.has(v.id)).map((v) => ({
       ...v,
       inStock: item.tracksInventory ? (variantAvailability.get(v.id) ?? true) : true,
