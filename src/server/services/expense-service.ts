@@ -183,6 +183,7 @@ export async function updateExpense(db: Database, actor: ActorContext, id: strin
 export type SpendingLedgerRow = {
   id: string;
   source: "expense" | "purchase";
+  paidAt: string | null;
   category: string;
   amount: number;
   expenseDate: string;
@@ -199,11 +200,11 @@ export async function listSpendingLedgerInRange(
   window: { limit: number; offset: number },
 ): Promise<SpendingLedgerRow[]> {
   const result = await db.execute<SpendingLedgerRow>(sql`
-    select id, source, category, amount, "expenseDate", payee, "referenceNumber", notes, recurring
+    select id, source, category, amount, "expenseDate", "paidAt", payee, "referenceNumber", notes, recurring
     from (
       select ${expenses.id} as id, 'expense'::text as source,
         ${expenses.category} as category, ${expenses.amount} as amount,
-        to_char(${expenses.expenseDate}, 'YYYY-MM-DD') as "expenseDate", ${expenses.payee} as payee,
+        to_char(${expenses.expenseDate}, 'YYYY-MM-DD') as "expenseDate", null::text as "paidAt", ${expenses.payee} as payee,
         ${expenses.referenceNumber} as "referenceNumber", ${expenses.notes} as notes,
         ${expenses.recurring} as recurring, ${expenses.createdAt} as created_at
       from ${expenses}
@@ -212,7 +213,8 @@ export async function listSpendingLedgerInRange(
       union all
       select ${purchases.id} as id, 'purchase'::text as source,
         'Ingredient purchase'::text as category, ${purchases.totalCost} as amount,
-        to_char(${purchases.purchaseDate}, 'YYYY-MM-DD') as "expenseDate", ${suppliers.name} as payee,
+        to_char(${purchases.purchaseDate}, 'YYYY-MM-DD') as "expenseDate",
+        to_char(${purchases.paidAt}, 'YYYY-MM-DD') as "paidAt", ${suppliers.name} as payee,
         ${purchases.invoiceNumber} as "referenceNumber", null::text as notes,
         false as recurring, ${purchases.createdAt} as created_at
       from ${purchases}
