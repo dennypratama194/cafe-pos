@@ -176,6 +176,7 @@ export function AdminShell({
             className={`flex h-14 shrink-0 items-center justify-between border-b border-[var(--color-border)] px-4 ${collapsed ? "md:justify-center" : ""}` }
           >
             <button type="button" onClick={() => setMobileNavOpen(false)} aria-label="Close menu" className="order-last rounded-[var(--radius-sm)] p-2 md:hidden"><X size={20} /></button>
+            {collapsed ? <div className="md:hidden"><BrandLogo className="h-8" alt={businessName} name={businessName} src={logoUrl} /></div> : null}
             {!collapsed ? (
               <>
                 <div className="flex min-w-0 items-center">
@@ -235,7 +236,7 @@ export function AdminShell({
                           href={item.href}
                           title={item.label}
                           className={`flex items-center gap-2.5 rounded-[var(--radius-sm)] px-3 py-2 text-sm font-medium transition-colors ${
-                            collapsed ? "justify-center" : ""
+                            collapsed ? "md:justify-center" : ""
                           } ${
                             active
                               ? "bg-[var(--color-selected-surface)] text-[var(--color-accent-primary)]"
