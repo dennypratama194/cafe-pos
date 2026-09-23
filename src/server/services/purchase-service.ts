@@ -238,3 +238,14 @@ export async function getPurchaseSpend(db: Database, businessId: string, range: 
   }).from(purchases).where(and(purchaseFilter(businessId, range), eq(purchases.status, "FINALIZED")));
   return { total: row.total, count: row.count };
 }
+
+/** Date buckets for the combined spending chart. */
+export async function getPurchaseSpendByDay(db: Database, businessId: string, range: BusinessDateRange) {
+  return db.select({
+    day: purchases.purchaseDate,
+    total: sql<number>`coalesce(sum(${purchases.totalCost}), 0)::bigint`.mapWith(Number),
+    entryCount: sql<number>`count(*)::int`,
+  }).from(purchases)
+    .where(and(purchaseFilter(businessId, range), eq(purchases.status, "FINALIZED")))
+    .groupBy(purchases.purchaseDate);
+}
