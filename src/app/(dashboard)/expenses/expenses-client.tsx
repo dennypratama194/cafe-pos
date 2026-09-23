@@ -120,13 +120,13 @@ export function ExpensesClient({
           />
           <StatCard
             icon={CalendarDays}
-            label="Avg per day"
+            label="Operating avg/day"
             value={formatIDR(averagePerDay)}
             trend={computeTrend(averagePerDay, previousAveragePerDay)}
             previousLabel={`over ${rangeLengthDays} ${rangeLengthDays === 1 ? "day" : "days"}`}
             trendMeansGood={false}
           />
-          <StatCard icon={Layers} label="Avg per entry" value={formatIDR(summary.averagePerEntry)} />
+          <StatCard icon={Layers} label="Operating avg/entry" value={formatIDR(summary.averagePerEntry)} />
         </div>
         <p className="mt-2 text-xs text-[var(--color-text-muted)]">
           Total cash spent includes {formatIDR(purchaseSpend.total)} of ingredient purchases. The trend and category split below show operating expenses only. All figures cover {from} → {to}.
@@ -217,7 +217,7 @@ export function ExpensesClient({
 
       <div>
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-[var(--color-text-primary)]">History</h2>
+          <h2 className="text-sm font-semibold text-[var(--color-text-primary)]">Operating expense history</h2>
           <span className="text-sm font-medium text-[var(--color-text-secondary)]">Total: {formatIDR(summary.total)}</span>
         </div>
         <div className="overflow-hidden rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)]">
