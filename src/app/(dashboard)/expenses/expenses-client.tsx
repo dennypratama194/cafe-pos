@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { DateRangeForm } from "@/components/ui/date-range-form";
 import { StatCard, computeTrend } from "@/components/ui/stat-card";
 import { TrendChart, type TrendPoint } from "@/components/ui/trend-chart";
-import type { ExpenseSummary } from "@/server/services/expense-service";
+import type { ExpenseSummary, SpendingLedgerRow } from "@/server/services/expense-service";
 import { Modal } from "@/components/ui/modal";
 import { Field, Select } from "@/components/ui/form-field";
 import { inputClassName, textareaClassName } from "@/components/ui/form-styles";
@@ -26,16 +26,7 @@ interface CategoryTotal {
   entryCount: number;
 }
 
-interface ExpenseRow {
-  id: string;
-  category: string;
-  amount: number;
-  expenseDate: string;
-  payee: string | null;
-  referenceNumber: string | null;
-  notes: string | null;
-  recurring: boolean;
-}
+type ExpenseRow = SpendingLedgerRow;
 
 const CATEGORY_LABEL: Record<string, string> = Object.fromEntries(
   EXPENSE_CATEGORIES.map((c) => [c, c.replace("_", " ").replace(/\b\w/g, (l) => l.toUpperCase())]),
@@ -47,7 +38,6 @@ export function ExpensesClient({
   summary,
   purchaseSpend,
   previousPurchaseSpend,
-  recentPurchases,
   previousSummary,
   byCategory,
   trendData,
@@ -62,7 +52,6 @@ export function ExpensesClient({
   summary: ExpenseSummary;
   purchaseSpend: { total: number; count: number };
   previousPurchaseSpend: { total: number; count: number };
-  recentPurchases: { id: string; purchaseDate: string; invoiceNumber: string | null; supplierName: string | null; totalCost: number }[];
   previousSummary: ExpenseSummary;
   byCategory: CategoryTotal[];
   trendData: TrendPoint[];
@@ -179,28 +168,6 @@ export function ExpensesClient({
         </div>
       </div>
 
-      <section className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
-        <div className="mb-3 flex items-center justify-between gap-3">
-          <div>
-            <h2 className="text-sm font-semibold text-[var(--color-text-primary)]">Ingredient purchases</h2>
-            <p className="text-xs text-[var(--color-text-muted)]">{purchaseSpend.count} receipts · {formatIDR(purchaseSpend.total)} in this period</p>
-          </div>
-          <Link href="/purchases" className="text-sm text-[var(--color-accent-primary)] underline">All receipts</Link>
-        </div>
-        {recentPurchases.length === 0 ? <p className="text-sm text-[var(--color-text-secondary)]">No finalized purchases in this period.</p> : (
-          <ul className="divide-y divide-[var(--color-border)]">
-            {recentPurchases.map((purchase) => (
-              <li key={purchase.id} className="flex items-center justify-between gap-3 py-2 text-sm">
-                <Link href={`/purchases/${purchase.id}`} className="text-[var(--color-text-primary)] underline">
-                  {purchase.purchaseDate} · {purchase.supplierName ?? "Ingredient purchase"}{purchase.invoiceNumber ? ` · ${purchase.invoiceNumber}` : ""}
-                </Link>
-                <span className="shrink-0 tabular-nums">{formatIDR(purchase.totalCost)}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
       <Modal
         open={drawerState !== null}
         onClose={() => setDrawerState(null)}
@@ -217,8 +184,8 @@ export function ExpensesClient({
 
       <div>
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-[var(--color-text-primary)]">Operating expense history</h2>
-          <span className="text-sm font-medium text-[var(--color-text-secondary)]">Total: {formatIDR(summary.total)}</span>
+          <h2 className="text-sm font-semibold text-[var(--color-text-primary)]">Spending history</h2>
+          <span className="text-sm font-medium text-[var(--color-text-secondary)]">Total: {formatIDR(summary.total + purchaseSpend.total)}</span>
         </div>
         <div className="overflow-hidden rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)]">
           <div className="overflow-x-auto">
@@ -226,6 +193,7 @@ export function ExpensesClient({
             <thead>
               <tr className="border-b border-[var(--color-border)] text-left text-xs font-medium uppercase tracking-wide text-[var(--color-text-muted)]">
                 <th className="px-4 py-3">Date</th>
+                <th className="px-4 py-3">Source</th>
                 <th className="px-4 py-3">Category</th>
                 <th className="px-4 py-3">Payee</th>
                 <th className="px-4 py-3">Amount</th>
@@ -235,25 +203,28 @@ export function ExpensesClient({
             <tbody>
               {records.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-10 text-center text-[var(--color-text-secondary)]">
-                    No expenses recorded between {from} and {to}.
+                  <td colSpan={6} className="px-4 py-10 text-center text-[var(--color-text-secondary)]">
+                    No spending recorded between {from} and {to}.
                   </td>
                 </tr>
               ) : (
                 records.map((r) => (
                   <tr key={r.id} className="border-b border-[var(--color-border)] last:border-0">
                     <td className="px-4 py-3 text-[var(--color-text-secondary)]">{r.expenseDate}</td>
+                    <td className="px-4 py-3 text-[var(--color-text-secondary)]">{r.source === "purchase" ? "Purchase" : "Manual expense"}</td>
                     <td className="px-4 py-3 text-[var(--color-text-primary)]">{CATEGORY_LABEL[r.category] ?? r.category}</td>
                     <td className="px-4 py-3 text-[var(--color-text-secondary)]">{r.payee ?? "—"}</td>
                     <td className="px-4 py-3 tabular-nums">{formatIDR(r.amount)}</td>
                     <td className="px-4 py-3">
                       <div className="flex justify-end">
-                        <ActionMenu
-                          label={`Actions for the expense on ${r.expenseDate}`}
-                          items={[
-                            { label: "Edit details", onSelect: () => setDrawerState({ mode: "edit", row: r }) },
-                          ]}
-                        />
+                        {r.source === "purchase" ? (
+                          <Link href={`/purchases/${r.id}`} className="text-sm text-[var(--color-accent-primary)] underline">View receipt</Link>
+                        ) : (
+                          <ActionMenu
+                            label={`Actions for the expense on ${r.expenseDate}`}
+                            items={[{ label: "Edit details", onSelect: () => setDrawerState({ mode: "edit", row: r }) }]}
+                          />
+                        )}
                       </div>
                     </td>
                   </tr>
