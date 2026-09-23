@@ -28,6 +28,8 @@ export async function createPurchaseAction(input: unknown): Promise<PurchaseActi
 
     await createAndFinalizePurchase(db, { businessId: user.businessId, userId: user.id }, parsed.data);
     revalidatePath("/purchases");
+    revalidatePath("/expenses");
+    revalidatePath("/dashboard");
     revalidatePath("/ingredients");
     revalidatePath("/inventory");
     invalidatePosMenuCache(user.businessId);
