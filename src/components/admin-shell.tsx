@@ -170,7 +170,7 @@ export function AdminShell({
         <aside
           id="admin-navigation"
           aria-label="Main navigation"
-          className={`${mobileNavOpen ? "translate-x-0" : "-translate-x-full"} fixed inset-y-0 left-0 z-40 flex w-[min(280px,85vw)] flex-col border-r border-[var(--color-border)] bg-[var(--color-surface)] transition-transform duration-150 md:static md:z-auto md:h-dvh md:shrink-0 md:translate-x-0 md:transition-[width] ${collapsed ? "md:w-[68px]" : "md:w-[220px]"}`}
+          className={`${mobileNavOpen ? "visible translate-x-0" : "invisible -translate-x-full"} fixed inset-y-0 left-0 z-40 flex w-[min(280px,85vw)] flex-col border-r border-[var(--color-border)] bg-[var(--color-surface)] transition-transform duration-150 md:static md:z-auto md:h-dvh md:shrink-0 md:visible md:translate-x-0 md:transition-[width] ${collapsed ? "md:w-[68px]" : "md:w-[220px]"}`}
         >
           <div
             className={`flex h-14 shrink-0 items-center justify-between border-b border-[var(--color-border)] px-4 ${collapsed ? "md:justify-center" : ""}` }
