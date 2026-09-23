@@ -453,7 +453,7 @@ export function PosClient({
                 className="flex items-center gap-2 rounded-[var(--radius-sm)] py-1 pl-1 pr-2 text-left hover:bg-[var(--color-selected-surface)]"
               >
                 <BrandLogo className="h-9" alt={businessName} name={businessName} src={logoUrl} markOnly />
-                <span className="min-w-0 max-w-[13rem]">
+                <span className="min-w-0 max-w-[5rem] sm:max-w-[13rem]">
                   <span className="block truncate text-sm font-medium text-[var(--color-text-primary)]">
                     {businessName}
                   </span>
@@ -479,7 +479,7 @@ export function PosClient({
               ) : null}
             </div>
           ) : (
-            <BrandLogo className="h-9" alt={businessName} name={businessName} src={logoUrl} />
+            <BrandLogo className="h-9 max-w-[6rem] overflow-hidden sm:max-w-[13rem]" alt={businessName} name={businessName} src={logoUrl} />
           )}
           {!isOnline ? (
             <span className="flex items-center gap-1.5 rounded-full bg-[var(--color-danger-bg)] px-2.5 py-1 text-xs font-medium text-[var(--color-danger)]">
