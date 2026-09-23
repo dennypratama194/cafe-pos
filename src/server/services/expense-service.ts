@@ -180,7 +180,7 @@ export async function updateExpense(db: Database, actor: ActorContext, id: strin
  * Each half is tenant/date scoped before UNION ALL, then the combined rows are
  * ordered and paged together so no receipt disappears between expense pages.
  */
-export interface SpendingLedgerRow {
+export type SpendingLedgerRow = {
   id: string;
   source: "expense" | "purchase";
   category: string;
@@ -190,7 +190,7 @@ export interface SpendingLedgerRow {
   referenceNumber: string | null;
   notes: string | null;
   recurring: boolean;
-}
+};
 
 export async function listSpendingLedgerInRange(
   db: Database,
@@ -203,7 +203,7 @@ export async function listSpendingLedgerInRange(
     from (
       select ${expenses.id} as id, 'expense'::text as source,
         ${expenses.category} as category, ${expenses.amount} as amount,
-        ${expenses.expenseDate} as "expenseDate", ${expenses.payee} as payee,
+        to_char(${expenses.expenseDate}, 'YYYY-MM-DD') as "expenseDate", ${expenses.payee} as payee,
         ${expenses.referenceNumber} as "referenceNumber", ${expenses.notes} as notes,
         ${expenses.recurring} as recurring, ${expenses.createdAt} as created_at
       from ${expenses}
@@ -212,7 +212,7 @@ export async function listSpendingLedgerInRange(
       union all
       select ${purchases.id} as id, 'purchase'::text as source,
         'Ingredient purchase'::text as category, ${purchases.totalCost} as amount,
-        ${purchases.purchaseDate} as "expenseDate", ${suppliers.name} as payee,
+        to_char(${purchases.purchaseDate}, 'YYYY-MM-DD') as "expenseDate", ${suppliers.name} as payee,
         ${purchases.invoiceNumber} as "referenceNumber", null::text as notes,
         false as recurring, ${purchases.createdAt} as created_at
       from ${purchases}
@@ -225,11 +225,5 @@ export async function listSpendingLedgerInRange(
     order by "expenseDate" desc, created_at desc, id desc
     limit ${window.limit} offset ${window.offset}
   `);
-  return result.rows.map((row) => ({
-    ...row,
-    // pg parses date as a Date in some configurations; normalize for the UI.
-    expenseDate: typeof row.expenseDate === "string"
-      ? row.expenseDate
-      : String(row.expenseDate),
-  }));
+  return result.rows;
 }
