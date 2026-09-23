@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { formatIDR } from "@/lib/money/money";
 import { useEffect, useState, type ReactNode } from "react";
 import { useActionState } from "react";
@@ -44,6 +45,9 @@ export function ExpensesClient({
   records,
   pagination,
   summary,
+  purchaseSpend,
+  previousPurchaseSpend,
+  recentPurchases,
   previousSummary,
   byCategory,
   trendData,
@@ -56,6 +60,9 @@ export function ExpensesClient({
   records: ExpenseRow[];
   pagination?: ReactNode;
   summary: ExpenseSummary;
+  purchaseSpend: { total: number; count: number };
+  previousPurchaseSpend: { total: number; count: number };
+  recentPurchases: { id: string; purchaseDate: string; invoiceNumber: string | null; supplierName: string | null; totalCost: number }[];
   previousSummary: ExpenseSummary;
   byCategory: CategoryTotal[];
   trendData: TrendPoint[];
@@ -78,7 +85,7 @@ export function ExpensesClient({
         <div>
           <h1 className="text-2xl font-semibold text-[var(--color-text-primary)]">Expenses</h1>
           <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
-            Manual operating expenses. These affect estimated net profit but never order COGS.
+            Operating expenses and ingredient purchases. Purchase costs enter profit through sold-item COGS, so they are not deducted twice.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
@@ -96,19 +103,19 @@ export function ExpensesClient({
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           <StatCard
             icon={Wallet}
-            label="Total expenses"
-            value={formatIDR(summary.total)}
-            trend={computeTrend(summary.total, previousSummary.total)}
-            previousLabel={`vs. ${formatIDR(previousSummary.total)} last period`}
+            label="Total cash spent"
+            value={formatIDR(summary.total + purchaseSpend.total)}
+            trend={computeTrend(summary.total + purchaseSpend.total, previousSummary.total + previousPurchaseSpend.total)}
+            previousLabel={`vs. ${formatIDR(previousSummary.total + previousPurchaseSpend.total)} last period`}
             trendMeansGood={false}
             emphasize
           />
           <StatCard
             icon={Receipt}
             label="Entries"
-            value={summary.entryCount.toLocaleString("id-ID")}
-            trend={computeTrend(summary.entryCount, previousSummary.entryCount)}
-            previousLabel={`vs. ${previousSummary.entryCount.toLocaleString("id-ID")} last period`}
+            value={(summary.entryCount + purchaseSpend.count).toLocaleString("id-ID")}
+            trend={computeTrend(summary.entryCount + purchaseSpend.count, previousSummary.entryCount + previousPurchaseSpend.count)}
+            previousLabel={`vs. ${(previousSummary.entryCount + previousPurchaseSpend.count).toLocaleString("id-ID")} last period`}
             trendMeansGood={false}
           />
           <StatCard
@@ -122,7 +129,7 @@ export function ExpensesClient({
           <StatCard icon={Layers} label="Avg per entry" value={formatIDR(summary.averagePerEntry)} />
         </div>
         <p className="mt-2 text-xs text-[var(--color-text-muted)]">
-          Cards, the category split and the history table below all cover {from} → {to}.
+          Total cash spent includes {formatIDR(purchaseSpend.total)} of ingredient purchases. The trend and category split below show operating expenses only. All figures cover {from} → {to}.
         </p>
       </div>
 
@@ -171,6 +178,28 @@ export function ExpensesClient({
           )}
         </div>
       </div>
+
+      <section className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <div>
+            <h2 className="text-sm font-semibold text-[var(--color-text-primary)]">Ingredient purchases</h2>
+            <p className="text-xs text-[var(--color-text-muted)]">{purchaseSpend.count} receipts · {formatIDR(purchaseSpend.total)} in this period</p>
+          </div>
+          <Link href="/purchases" className="text-sm text-[var(--color-accent-primary)] underline">All receipts</Link>
+        </div>
+        {recentPurchases.length === 0 ? <p className="text-sm text-[var(--color-text-secondary)]">No finalized purchases in this period.</p> : (
+          <ul className="divide-y divide-[var(--color-border)]">
+            {recentPurchases.map((purchase) => (
+              <li key={purchase.id} className="flex items-center justify-between gap-3 py-2 text-sm">
+                <Link href={`/purchases/${purchase.id}`} className="text-[var(--color-text-primary)] underline">
+                  {purchase.purchaseDate} · {purchase.supplierName ?? "Ingredient purchase"}{purchase.invoiceNumber ? ` · ${purchase.invoiceNumber}` : ""}
+                </Link>
+                <span className="shrink-0 tabular-nums">{formatIDR(purchase.totalCost)}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
       <Modal
         open={drawerState !== null}
