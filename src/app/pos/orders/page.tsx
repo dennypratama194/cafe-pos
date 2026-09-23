@@ -48,7 +48,7 @@ export default async function PosOrderHistoryPage({
   const itemsByOrder = await listOrderItemSummaries(db, orders.map((o) => o.id));
 
   return (
-    <div className="force-light-theme min-h-dvh bg-[var(--color-page-bg)] px-4 py-5 sm:px-6 sm:py-6">
+    <div className="force-light-theme min-h-screen bg-[var(--color-page-bg)] px-6 py-6">
       <div className="mx-auto max-w-[1200px]">
         <Link href="/pos" className="text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]">
           &larr; Back to POS
@@ -56,12 +56,12 @@ export default async function PosOrderHistoryPage({
         <h1 className="mt-2 text-2xl font-semibold text-[var(--color-text-primary)]">Order history</h1>
         <p className="mt-1 text-sm text-[var(--color-text-secondary)]">All submitted orders for this café.</p>
 
-        <form className="mt-6 flex flex-wrap items-end gap-3 [&>div]:min-w-0 [&>div]:flex-1 sm:[&>div]:flex-none action="/pos/orders">
+        <form className="mt-6 flex flex-wrap items-end gap-3" action="/pos/orders">
           <div>
             <label htmlFor="search" className="mb-1.5 block text-xs font-medium text-[var(--color-text-secondary)]">
               Order number
             </label>
-            <input id="search" name="search" defaultValue={search} placeholder="e.g. DEV-00012" className={inputClassName + " w-full"} />
+            <input id="search" name="search" defaultValue={search} placeholder="e.g. DEV-00012" className={inputClassName} />
           </div>
           <div>
             <label htmlFor="status" className="mb-1.5 block text-xs font-medium text-[var(--color-text-secondary)]">
