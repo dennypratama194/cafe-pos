@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import * as schema from "@/lib/db/schema";
 import { createManualAdjustment } from "@/server/services/inventory-service";
 import { submitOrder } from "@/server/services/order-service";
-import { createAndFinalizePurchase, getPurchaseSpend } from "@/server/services/purchase-service";
+import { createAndFinalizePurchase, getPurchaseSpend, getPaidPurchaseSpend, setPurchasePaidAt } from "@/server/services/purchase-service";
 import { getExpenseSummary, listSpendingLedgerInRange } from "@/server/services/expense-service";
 import { createAndSubmitStockCount } from "@/server/services/stock-count-service";
 import { createWasteRecord } from "@/server/services/waste-service";
@@ -46,6 +46,10 @@ describe.skipIf(!db)("stock flows on the batch movement path", () => {
     expect(purchase.totalCost).toBe(1400 + 3000);
     const range = { from: "2026-09-16", to: "2026-09-16" };
     expect(await getPurchaseSpend(db!, fx.business.id, range)).toEqual({ total: 4400, count: 1 });
+    expect(await getPaidPurchaseSpend(db!, fx.business.id, range)).toEqual({ total: 0, count: 0 });
+    await setPurchasePaidAt(db!, actor, purchase.id, "2026-09-17");
+    expect(await getPaidPurchaseSpend(db!, fx.business.id, range)).toEqual({ total: 0, count: 0 });
+    expect(await getPaidPurchaseSpend(db!, fx.business.id, { from: "2026-09-17", to: "2026-09-17" })).toEqual({ total: 4400, count: 1 });
     expect((await getExpenseSummary(db!, fx.business.id, range)).total).toBe(0);
     const [electricity] = await db!.insert(schema.expenses).values({
       businessId: fx.business.id, category: "electricity", amount: 600,
@@ -54,7 +58,7 @@ describe.skipIf(!db)("stock flows on the batch movement path", () => {
     const firstPage = await listSpendingLedgerInRange(db!, fx.business.id, range, { limit: 1, offset: 0 });
     const secondPage = await listSpendingLedgerInRange(db!, fx.business.id, range, { limit: 1, offset: 1 });
     expect(firstPage).toMatchObject([{ id: electricity.id, source: "expense", category: "electricity", amount: 600 }]);
-    expect(secondPage).toMatchObject([{ id: purchase.id, source: "purchase", category: "Ingredient purchase", amount: 4400 }]);
+    expect(secondPage).toMatchObject([{ id: purchase.id, source: "purchase", category: "Ingredient purchase", amount: 4400, paidAt: "2026-09-17" }]);
     expect((await getExpenseSummary(db!, fx.business.id, range)).total).toBe(600);
 
     const after = await ingredientRow(db!, fx.ingredient.id);
