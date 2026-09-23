@@ -267,7 +267,7 @@ describe.skipIf(!db)("getPosMenu does not touch business settings", () => {
     // More items/variants/options never add statements, only the stages that apply.
     expect(smallCount).toBe(6);
     expect(bigCount).toBe(8);
-    // Negative stock allowed: no recipe or recipe-line reads.
-    expect(await countStatements(big.business.id, true, db!)).toBe(5);
+    // Negative stock skips modifier availability reads, but still checks variant recipes.
+    expect(await countStatements(big.business.id, true, db!)).toBe(7);
   });
 });
