@@ -27,6 +27,8 @@ export const purchases = pgTable("purchases", {
   supplierId: uuid("supplier_id"),
   invoiceNumber: text("invoice_number"),
   purchaseDate: date("purchase_date").notNull(),
+  // Null means payment has not been confirmed. Existing receipts remain unknown.
+  paidAt: date("paid_at"),
   status: purchaseStatusEnum("status").notNull().default("DRAFT"),
   // Whole Rupiah; sum of purchase_lines.total_line_cost.
   totalCost: integer("total_cost").notNull().default(0),
