@@ -64,8 +64,10 @@ export function ExpensesClient({
     null,
   );
 
-  const averagePerDay = rangeLengthDays > 0 ? Math.round(summary.total / rangeLengthDays) : 0;
-  const previousAveragePerDay = rangeLengthDays > 0 ? Math.round(previousSummary.total / rangeLengthDays) : 0;
+  const totalSpent = summary.total + purchaseSpend.total;
+  const totalEntries = summary.entryCount + purchaseSpend.count;
+  const averagePerDay = rangeLengthDays > 0 ? Math.round(totalSpent / rangeLengthDays) : 0;
+  const previousAveragePerDay = rangeLengthDays > 0 ? Math.round((previousSummary.total + previousPurchaseSpend.total) / rangeLengthDays) : 0;
   const largestCategoryTotal = byCategory[0]?.total ?? 0;
 
   return (
@@ -109,27 +111,27 @@ export function ExpensesClient({
           />
           <StatCard
             icon={CalendarDays}
-            label="Operating avg/day"
+            label="Avg per day"
             value={formatIDR(averagePerDay)}
             trend={computeTrend(averagePerDay, previousAveragePerDay)}
             previousLabel={`over ${rangeLengthDays} ${rangeLengthDays === 1 ? "day" : "days"}`}
             trendMeansGood={false}
           />
-          <StatCard icon={Layers} label="Operating avg/entry" value={formatIDR(summary.averagePerEntry)} />
+          <StatCard icon={Layers} label="Avg per entry" value={formatIDR(totalEntries ? Math.round(totalSpent / totalEntries) : 0)} />
         </div>
         <p className="mt-2 text-xs text-[var(--color-text-muted)]">
-          Total cash spent includes {formatIDR(purchaseSpend.total)} of ingredient purchases. The trend and category split below show operating expenses only. All figures cover {from} → {to}.
+          Includes {formatIDR(purchaseSpend.total)} of ingredient purchases. Purchases appear in the chart, category split and history. Estimated net profit still uses sold-item COGS. Figures cover {from} → {to}.
         </p>
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-4">
         <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4 lg:col-span-3">
-          <h2 className="text-sm font-semibold text-[var(--color-text-primary)]">Expense trend — last 14 days</h2>
+          <h2 className="text-sm font-semibold text-[var(--color-text-primary)]">Spending trend — last 14 days</h2>
           <div className="mt-3">
             <TrendChart
               data={trendData}
-              ariaLabel="Daily expense total for the last 14 days"
-              emptyText="No expenses in the last 14 days."
+              ariaLabel="Daily spending total for the last 14 days"
+              emptyText="No spending in the last 14 days."
             />
           </div>
         </div>
@@ -149,7 +151,7 @@ export function ExpensesClient({
                     <span className="shrink-0 tabular-nums text-[var(--color-text-primary)]">
                       {formatIDR(c.total)}
                       <span className="ml-2 text-xs text-[var(--color-text-muted)]">
-                        {shareOfTotal(c.total, summary.total)}
+                        {shareOfTotal(c.total, totalSpent)}
                       </span>
                     </span>
                   </div>
