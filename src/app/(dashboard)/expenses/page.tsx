@@ -19,7 +19,7 @@ import {
 import { pageWindow, parsePageParam, toPage } from "@/lib/pagination";
 import { ServerPagination } from "@/components/ui/server-pagination";
 import type { TrendPoint } from "@/components/ui/trend-chart";
-import { getPurchaseSpend, getPurchaseSpendByDay } from "@/server/services/purchase-service";
+import { getPurchaseSpend, getPurchaseSpendByDay, getPaidPurchaseSpend } from "@/server/services/purchase-service";
 import { ExpensesClient } from "./expenses-client";
 
 export const metadata: Metadata = {
@@ -56,7 +56,7 @@ export default async function ExpensesPage({
   const chartFromDate = shiftBusinessDate(toDate, -(CHART_DAYS - 1));
   const window = pageWindow(parsePageParam(page));
 
-  const [rows, manualCount, summary, previousSummary, byCategory, byDay, purchaseSpend, previousPurchaseSpend, purchasesByDay] = await Promise.all([
+  const [rows, manualCount, summary, previousSummary, byCategory, byDay, purchaseSpend, previousPurchaseSpend, purchasesByDay, paidPurchaseSpend] = await Promise.all([
     listSpendingLedgerInRange(db, user.businessId, range, window),
     countExpensesInRange(db, user.businessId, range),
     getExpenseSummary(db, user.businessId, range),
@@ -66,6 +66,7 @@ export default async function ExpensesPage({
     getPurchaseSpend(db, user.businessId, range),
     getPurchaseSpend(db, user.businessId, previousRange),
     getPurchaseSpendByDay(db, user.businessId, { from: chartFromDate, to: toDate }),
+    getPaidPurchaseSpend(db, user.businessId, range),
   ]);
   const records = toPage(rows, window.page, window.pageSize);
   const totalItems = manualCount + purchaseSpend.count;
@@ -98,6 +99,7 @@ export default async function ExpensesPage({
         }
         summary={summary}
         purchaseSpend={purchaseSpend}
+        paidPurchaseSpend={paidPurchaseSpend}
         previousPurchaseSpend={previousPurchaseSpend}
         previousSummary={previousSummary}
         byCategory={[...byCategory, ...(purchaseSpend.count ? [{ category: "Ingredient purchase", total: purchaseSpend.total, entryCount: purchaseSpend.count }] : [])].sort((a, b) => b.total - a.total)}
