@@ -124,7 +124,7 @@ export function PosCartPanel({
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 px-4 py-3 sm:px-5 lg:overflow-y-auto">
+      <div className="shrink-0 px-4 py-3 sm:px-5 lg:min-h-0 lg:flex-1 lg:shrink lg:overflow-y-auto">
         {cart.length === 0 ? (
           <p className="mt-8 text-center text-sm text-[var(--color-text-secondary)]">Cart is empty. Tap a menu item to add it.</p>
         ) : (
