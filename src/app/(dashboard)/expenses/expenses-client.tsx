@@ -85,7 +85,7 @@ export function ExpensesClient({
         <div>
           <h1 className="text-2xl font-semibold text-[var(--color-text-primary)]">Expenses</h1>
           <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
-            Operating expenses and ingredient purchases. Purchase costs enter profit through sold-item COGS, so they are not deducted twice.
+            Operating expenses and ingredient purchases. Record ingredient purchases through Purchases, not the manual expense form. Their costs enter profit through sold-item COGS.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
