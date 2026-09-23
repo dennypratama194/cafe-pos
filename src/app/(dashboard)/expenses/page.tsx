@@ -6,7 +6,7 @@ import {
   getExpensesByCategory,
   getExpensesByDay,
   countExpensesInRange,
-  listExpensesInRange,
+  listSpendingLedgerInRange,
 } from "@/server/services/expense-service";
 import {
   calendarDaysInclusive,
@@ -19,7 +19,7 @@ import {
 import { pageWindow, parsePageParam, toPage } from "@/lib/pagination";
 import { ServerPagination } from "@/components/ui/server-pagination";
 import type { TrendPoint } from "@/components/ui/trend-chart";
-import { getPurchaseSpend, listPurchases } from "@/server/services/purchase-service";
+import { getPurchaseSpend } from "@/server/services/purchase-service";
 import { ExpensesClient } from "./expenses-client";
 
 export const metadata: Metadata = {
@@ -56,8 +56,8 @@ export default async function ExpensesPage({
   const chartFromDate = shiftBusinessDate(toDate, -(CHART_DAYS - 1));
   const window = pageWindow(parsePageParam(page));
 
-  const [rows, totalItems, summary, previousSummary, byCategory, byDay, purchaseSpend, previousPurchaseSpend, recentPurchases] = await Promise.all([
-    listExpensesInRange(db, user.businessId, range, window),
+  const [rows, manualCount, summary, previousSummary, byCategory, byDay, purchaseSpend, previousPurchaseSpend] = await Promise.all([
+    listSpendingLedgerInRange(db, user.businessId, range, window),
     countExpensesInRange(db, user.businessId, range),
     getExpenseSummary(db, user.businessId, range),
     getExpenseSummary(db, user.businessId, previousRange),
@@ -65,9 +65,9 @@ export default async function ExpensesPage({
     getExpensesByDay(db, user.businessId, { from: chartFromDate, to: toDate }),
     getPurchaseSpend(db, user.businessId, range),
     getPurchaseSpend(db, user.businessId, previousRange),
-    listPurchases(db, user.businessId, { range, limit: 10 }),
   ]);
   const records = toPage(rows, window.page, window.pageSize);
+  const totalItems = manualCount + purchaseSpend.count;
 
   const byDayMap = new Map(byDay.map((d) => [d.day, d]));
   const trendData: TrendPoint[] = Array.from({ length: CHART_DAYS }, (_, i) => {
@@ -96,7 +96,6 @@ export default async function ExpensesPage({
         summary={summary}
         purchaseSpend={purchaseSpend}
         previousPurchaseSpend={previousPurchaseSpend}
-        recentPurchases={recentPurchases.filter((purchase) => purchase.status === "FINALIZED")}
         previousSummary={previousSummary}
         byCategory={byCategory}
         trendData={trendData}
