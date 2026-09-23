@@ -37,6 +37,7 @@ export function ExpensesClient({
   pagination,
   summary,
   purchaseSpend,
+  paidPurchaseSpend,
   previousPurchaseSpend,
   previousSummary,
   byCategory,
@@ -51,6 +52,7 @@ export function ExpensesClient({
   pagination?: ReactNode;
   summary: ExpenseSummary;
   purchaseSpend: { total: number; count: number };
+  paidPurchaseSpend: { total: number; count: number };
   previousPurchaseSpend: { total: number; count: number };
   previousSummary: ExpenseSummary;
   byCategory: CategoryTotal[];
@@ -94,7 +96,7 @@ export function ExpensesClient({
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           <StatCard
             icon={Wallet}
-            label="Total cash spent"
+            label="Recorded spending"
             value={formatIDR(summary.total + purchaseSpend.total)}
             trend={computeTrend(summary.total + purchaseSpend.total, previousSummary.total + previousPurchaseSpend.total)}
             previousLabel={`vs. ${formatIDR(previousSummary.total + previousPurchaseSpend.total)} last period`}
@@ -117,10 +119,10 @@ export function ExpensesClient({
             previousLabel={`over ${rangeLengthDays} ${rangeLengthDays === 1 ? "day" : "days"}`}
             trendMeansGood={false}
           />
-          <StatCard icon={Layers} label="Avg per entry" value={formatIDR(totalEntries ? Math.round(totalSpent / totalEntries) : 0)} />
+          <StatCard icon={Layers} label="Supplier payments" value={formatIDR(paidPurchaseSpend.total)} />
         </div>
         <p className="mt-2 text-xs text-[var(--color-text-muted)]">
-          Includes {formatIDR(purchaseSpend.total)} of ingredient purchases. Purchases appear in the chart, category split and history. Estimated net profit still uses sold-item COGS. Figures cover {from} → {to}.
+          Recorded spending includes {formatIDR(purchaseSpend.total)} of received ingredients, paid or unpaid, dated by receipt. Supplier payments use confirmed payment dates. Profit counts ingredients when sold through COGS. Figures cover {from} → {to}.
         </p>
       </div>
 
@@ -213,7 +215,9 @@ export function ExpensesClient({
                 records.map((r) => (
                   <tr key={r.id} className="border-b border-[var(--color-border)] last:border-0">
                     <td className="px-4 py-3 text-[var(--color-text-secondary)]">{r.expenseDate}</td>
-                    <td className="px-4 py-3 text-[var(--color-text-secondary)]">{r.source === "purchase" ? "Purchase" : "Manual expense"}</td>
+                    <td className="px-4 py-3 text-[var(--color-text-secondary)]">{r.source === "purchase" ? (
+                      <span>Purchase<span className="block text-xs">{r.paidAt ? `Paid ${r.paidAt}` : "Payment unconfirmed"}</span></span>
+                    ) : "Manual expense"}</td>
                     <td className="px-4 py-3 text-[var(--color-text-primary)]">{CATEGORY_LABEL[r.category] ?? r.category}</td>
                     <td className="px-4 py-3 text-[var(--color-text-secondary)]">{r.payee ?? "—"}</td>
                     <td className="px-4 py-3 tabular-nums">{formatIDR(r.amount)}</td>
