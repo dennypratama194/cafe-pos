@@ -228,3 +228,13 @@ export async function createAndFinalizePurchase(
     return result;
   });
 }
+
+/** Purchase cash outflow for the expense view. Inventory purchases are already
+ * represented in sales COGS and must not be deducted again from net profit. */
+export async function getPurchaseSpend(db: Database, businessId: string, range: BusinessDateRange) {
+  const [row] = await db.select({
+    total: sql<number>`coalesce(sum(${purchases.totalCost}), 0)::bigint`.mapWith(Number),
+    count: sql<number>`count(*)::int`,
+  }).from(purchases).where(and(purchaseFilter(businessId, range), eq(purchases.status, "FINALIZED")));
+  return { total: row.total, count: row.count };
+}
