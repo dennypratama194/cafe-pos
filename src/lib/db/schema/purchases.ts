@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { sql } from "drizzle-orm";
 import {
   date,
   foreignKey,
@@ -39,6 +40,7 @@ export const purchases = pgTable("purchases", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [
   index("purchases_business_purchase_date_idx").on(table.businessId, table.purchaseDate),
+  index("purchases_business_paid_at_idx").on(table.businessId, table.paidAt).where(sql`${table.paidAt} is not null`),
   foreignKey({
     name: "purchases_supplier_same_business_fk",
     columns: [table.businessId, table.supplierId],
