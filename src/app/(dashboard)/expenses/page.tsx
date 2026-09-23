@@ -19,7 +19,7 @@ import {
 import { pageWindow, parsePageParam, toPage } from "@/lib/pagination";
 import { ServerPagination } from "@/components/ui/server-pagination";
 import type { TrendPoint } from "@/components/ui/trend-chart";
-import { getPurchaseSpend } from "@/server/services/purchase-service";
+import { getPurchaseSpend, getPurchaseSpendByDay } from "@/server/services/purchase-service";
 import { ExpensesClient } from "./expenses-client";
 
 export const metadata: Metadata = {
@@ -56,7 +56,7 @@ export default async function ExpensesPage({
   const chartFromDate = shiftBusinessDate(toDate, -(CHART_DAYS - 1));
   const window = pageWindow(parsePageParam(page));
 
-  const [rows, manualCount, summary, previousSummary, byCategory, byDay, purchaseSpend, previousPurchaseSpend] = await Promise.all([
+  const [rows, manualCount, summary, previousSummary, byCategory, byDay, purchaseSpend, previousPurchaseSpend, purchasesByDay] = await Promise.all([
     listSpendingLedgerInRange(db, user.businessId, range, window),
     countExpensesInRange(db, user.businessId, range),
     getExpenseSummary(db, user.businessId, range),
@@ -65,18 +65,21 @@ export default async function ExpensesPage({
     getExpensesByDay(db, user.businessId, { from: chartFromDate, to: toDate }),
     getPurchaseSpend(db, user.businessId, range),
     getPurchaseSpend(db, user.businessId, previousRange),
+    getPurchaseSpendByDay(db, user.businessId, { from: chartFromDate, to: toDate }),
   ]);
   const records = toPage(rows, window.page, window.pageSize);
   const totalItems = manualCount + purchaseSpend.count;
 
   const byDayMap = new Map(byDay.map((d) => [d.day, d]));
+  const purchaseDayMap = new Map(purchasesByDay.map((d) => [d.day, d]));
   const trendData: TrendPoint[] = Array.from({ length: CHART_DAYS }, (_, i) => {
     const day = shiftBusinessDate(chartFromDate, i);
     const row = byDayMap.get(day);
-    const entryCount = row?.entryCount ?? 0;
+    const purchase = purchaseDayMap.get(day);
+    const entryCount = (row?.entryCount ?? 0) + (purchase?.entryCount ?? 0);
     return {
       day,
-      value: row?.total ?? 0,
+      value: (row?.total ?? 0) + (purchase?.total ?? 0),
       caption: `${entryCount} ${entryCount === 1 ? "entry" : "entries"}`,
     };
   });
@@ -97,7 +100,7 @@ export default async function ExpensesPage({
         purchaseSpend={purchaseSpend}
         previousPurchaseSpend={previousPurchaseSpend}
         previousSummary={previousSummary}
-        byCategory={byCategory}
+        byCategory={[...byCategory, ...(purchaseSpend.count ? [{ category: "Ingredient purchase", total: purchaseSpend.total, entryCount: purchaseSpend.count }] : [])].sort((a, b) => b.total - a.total)}
         trendData={trendData}
         rangeLengthDays={rangeLengthDays}
         from={fromDate}
