@@ -3,7 +3,8 @@ import { describe, expect, it } from "vitest";
 import * as schema from "@/lib/db/schema";
 import { createManualAdjustment } from "@/server/services/inventory-service";
 import { submitOrder } from "@/server/services/order-service";
-import { createAndFinalizePurchase } from "@/server/services/purchase-service";
+import { createAndFinalizePurchase, getPurchaseSpend } from "@/server/services/purchase-service";
+import { getExpenseSummary } from "@/server/services/expense-service";
 import { createAndSubmitStockCount } from "@/server/services/stock-count-service";
 import { createWasteRecord } from "@/server/services/waste-service";
 import { getTestDb, seedTestFixture, type TestDb } from "./helpers";
@@ -43,6 +44,9 @@ describe.skipIf(!db)("stock flows on the batch movement path", () => {
 
     expect(purchase.status).toBe("FINALIZED");
     expect(purchase.totalCost).toBe(1400 + 3000);
+    const range = { from: "2026-09-16", to: "2026-09-16" };
+    expect(await getPurchaseSpend(db!, fx.business.id, range)).toEqual({ total: 4400, count: 1 });
+    expect((await getExpenseSummary(db!, fx.business.id, range)).total).toBe(0);
     const after = await ingredientRow(db!, fx.ingredient.id);
     expect(Number(after.currentQuantityBaseUnits)).toBe(400);
     expect(Number(after.averageCostPerBaseUnit)).toBeCloseTo(13.5, 6);
