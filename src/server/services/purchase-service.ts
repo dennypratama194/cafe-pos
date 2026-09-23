@@ -59,6 +59,7 @@ export async function getPurchaseWithLines(db: Database, businessId: string, id:
       id: purchases.id,
       invoiceNumber: purchases.invoiceNumber,
       purchaseDate: purchases.purchaseDate,
+      paidAt: purchases.paidAt,
       status: purchases.status,
       totalCost: purchases.totalCost,
       createdAt: purchases.createdAt,
